@@ -1,4 +1,5 @@
 import docker
+import logging
 
 
 class Healer:
@@ -16,10 +17,14 @@ class Healer:
             if 'Health' in state and state['Health']['Status'] == 'unhealthy':
                 restart_containers_ids.append(container.id)
 
-        restart_containers_ids = self.reorder_dependencies(restart_containers_ids)
-        for container_id in restart_containers_ids:
-            container = self.client.containers.get(container_id)
-            container.restart()
+        if len(restart_containers_ids) > 0:
+            logging.info("Unhealthy containers: [{0}]".format(", ".join(restart_containers_ids)))
+            restart_containers_ids = self.reorder_dependencies(restart_containers_ids)
+            logging.info("Restarting containers order: [{0}]".format(", ".join(restart_containers_ids)))
+            for container_id in restart_containers_ids:
+                container = self.client.containers.get(container_id)
+                logging.info("Restart container: {0}".format(container_id))
+                container.restart()
 
     def find_dependencies(self, id):
         return self.find_network_dependencies(id)
